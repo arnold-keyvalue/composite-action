@@ -1,0 +1,48 @@
+name: "Build and Push NodeJS application to Docker Registry"
+description: "Builds container image and pushes it to the Docker Registry"
+
+inputs:
+  service_account_key:
+    description: "GCP Service Account Key"
+    required: true
+  project_id:
+    description: "GCP Project ID"
+    required: true
+  npm_token:
+    description: "NPM Token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # Generating the Docker Image Tag
+    - name: Docker Image Tag creation
+      id: image_tag
+      shell: bash
+      run: |
+        GCR_PROJECT_ID="${{ inputs.project_id }}"
+        IMAGE="gcr.io/$GCR_PROJECT_ID/${{ github.event.repository.name }}"
+        BRANCH="${GITHUB_REF#refs/heads/}"
+        SHA="$(git rev-parse --short HEAD)"
+        JOB_ID="${GITHUB_RUN_NUMBER}"
+        IMAGE_TAG_FULL="$IMAGE:$BRANCH-cijob-$JOB_ID-commit-$SHA"
+        echo "::set-output name=IMAGE::$IMAGE"
+        echo "::set-output name=IMAGE_TAG_FULL::$IMAGE_TAG_FULL"
+    # Login to GCR
+    - name: docker login
+      uses: "lagren/docker-gcr-action@master"
+      with:
+        SERVICE_ACCOUNT_KEY: ${{ inputs.service_account_key }}
+        HOST: "gcr.io"
+    # Build and push to GCR
+    - uses: docker/setup-buildx-action@v1.5.1
+      with:
+        driver: docker
+    - name: docker publish image
+      uses: docker/build-push-action@v2.6.1
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.image_tag.outputs.IMAGE_TAG_FULL }}
+        build-args: NPM_TOKEN=${{ inputs.npm_token }}
