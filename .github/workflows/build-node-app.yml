@@ -27,7 +27,7 @@ on:
 
 jobs:
   test:
-    runs-on: [self-hosted, tokko]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       # Checkout code
@@ -45,7 +45,7 @@ jobs:
          npm run lint
          npm run test
   build:
-    runs-on: [self-hosted, tokko]
+    runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v2
@@ -86,7 +86,7 @@ jobs:
     needs:
       - test
       - build
-    runs-on: [self-hosted, tokko]
+    runs-on: ubuntu-latest
     steps:
       - name: Slack Workflow Notification
         uses: Gamesight/slack-workflow-status@v1.0.1
