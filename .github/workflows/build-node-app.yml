@@ -28,6 +28,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.npm_token }}
     timeout-minutes: 20
     steps:
       # Checkout code
